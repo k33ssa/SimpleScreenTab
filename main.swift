@@ -69,9 +69,13 @@ final class Switcher {
                   let b = CGRect(dictionaryRepresentation: bd),
                   b.width > 60, b.height > 40 else { continue }
             if let a = w[kCGWindowAlpha as String] as? Double, a <= 0 { continue }
-            guard screenFor(cocoaRect(b))?.frame == screen.frame,
+            let cr = cocoaRect(b)
+            guard screenFor(cr)?.frame == screen.frame,
                   let app = NSRunningApplication(processIdentifier: pid),
                   app.activationPolicy == .regular else { continue }
+            // пропустить полноэкранные окна (границы совпадают со всем экраном)
+            let f = screen.frame
+            if abs(cr.width - f.width) < 2, abs(cr.height - f.height) < 2 { continue }
             seen.insert(pid)
             out.append(Entry(app: app, bounds: b))
         }
