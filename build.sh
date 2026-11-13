@@ -9,7 +9,7 @@ PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
 
 echo "Compiling..."
 mkdir -p build
-swiftc -O main.swift -o build/SimpleScreenTab -framework Cocoa -framework ApplicationServices
+swiftc -O main.swift -o build/SimpleScreenTab -framework Cocoa -framework ApplicationServices -framework ServiceManagement
 
 echo "Stopping running instance..."
 launchctl bootout "gui/$(id -u)/$LABEL" 2>/dev/null || true

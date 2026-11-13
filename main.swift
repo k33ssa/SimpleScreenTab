@@ -2,6 +2,7 @@
 // https://github.com/k33ssa/SimpleScreenTab  —  MIT.
 import Cocoa
 import ApplicationServices
+import ServiceManagement
 
 struct Entry {
     let app: NSRunningApplication
@@ -264,6 +265,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var retry: Timer?
 
     func applicationDidFinishLaunching(_ n: Notification) {
+        // второй экземпляр не нужен
+        let me = NSRunningApplication.current
+        if NSRunningApplication.runningApplications(withBundleIdentifier: Bundle.main.bundleIdentifier ?? "")
+            .contains(where: { $0 != me }) { exit(0) }
+        // автозапуск при входе (для установки из zip/brew; сборка из исходников ставит LaunchAgent)
+        let agent = NSHomeDirectory() + "/Library/LaunchAgents/\(Bundle.main.bundleIdentifier ?? "").plist"
+        if !FileManager.default.fileExists(atPath: agent), SMAppService.mainApp.status != .enabled {
+            try? SMAppService.mainApp.register()
+        }
         Switcher.shared.makePanel()
 
         status = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
