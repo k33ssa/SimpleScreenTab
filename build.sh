@@ -42,6 +42,9 @@ PLISTEOF
 echo "Signing..."
 ID=$(security find-identity -p codesigning 2>/dev/null | awk "/ScreenTab Local Signing/{print \$2; exit}"); codesign --force --deep --sign "${ID:--}" "$APP"
 
+# новая подпись = старая галочка недействительна; сбросить, чтобы macOS спросила заново
+if [ -z "$ID" ]; then tccutil reset Accessibility "$LABEL" >/dev/null 2>&1 || true; fi
+
 echo "Installing login item..."
 cat > "$PLIST" <<PLISTEOF
 <?xml version="1.0" encoding="UTF-8"?>
