@@ -6,18 +6,32 @@ Written in a single Swift file, about 300 lines, no dependencies, no telemetry, 
 
 ## Install / Update
 
-One command in Terminal — same command installs and updates to the latest version:
+**Homebrew** (recommended, updates with `brew upgrade`):
+
+```bash
+brew install --cask k33ssa/tap/simplescreentab
+```
+
+**Download:** grab `SimpleScreenTab-x.y.z.zip` from [Releases](https://github.com/k33ssa/SimpleScreenTab/releases/latest), move `SimpleScreenTab.app` to Applications and open it. The app is free and not notarized, so if macOS refuses to open it, run `xattr -dr com.apple.quarantine /Applications/SimpleScreenTab.app` once.
+
+**Build from source in one line** (needs Xcode Command Line Tools; re-run to update):
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/k33ssa/SimpleScreenTab/master/install.sh | bash
 ```
 
-It builds the app into `/Applications`, sets it to start at login, and launches it. On first run, grant Accessibility under System Settings -> Privacy & Security -> Accessibility. Re-run the same line any time to update.
+On first run, allow Accessibility when macOS asks (System Settings -> Privacy & Security -> Accessibility). The app adds itself to login items.
 
-To uninstall:
+To uninstall: `brew uninstall --cask simplescreentab`, or for a source build:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/k33ssa/SimpleScreenTab/master/install.sh | bash -s -- uninstall
+```
+
+Automatic background updates for Homebrew installs:
+
+```bash
+brew tap homebrew/autoupdate && brew autoupdate start --upgrade --cleanup
 ```
 
 ## What it does
