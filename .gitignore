@@ -1,0 +1,5 @@
+build/
+icon.iconset/
+icon1024.png
+*.o
+.DS_Store
