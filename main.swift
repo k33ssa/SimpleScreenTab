@@ -271,10 +271,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .contains(where: { $0 != me }) { exit(0) }
         // автозапуск при входе (для установки из zip/brew; сборка из исходников ставит LaunchAgent)
         let agent = NSHomeDirectory() + "/Library/LaunchAgents/\(Bundle.main.bundleIdentifier ?? "").plist"
-        if !FileManager.default.fileExists(atPath: agent), SMAppService.mainApp.status != .enabled {
+        if Bundle.main.bundleURL.pathExtension == "app",
+           !FileManager.default.fileExists(atPath: agent), SMAppService.mainApp.status != .enabled {
             try? SMAppService.mainApp.register()
         }
         Switcher.shared.makePanel()
+        #if PREVIEW
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { Switcher.shared.show(reverse: false) }
+        return
+        #endif
 
         status = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         if let icon = NSImage(named: NSImage.applicationIconName) {

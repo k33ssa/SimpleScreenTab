@@ -1,8 +1,12 @@
+<p align="center"><img src="docs/icon.png" width="128" alt="SimpleScreenTab icon"></p>
+
 # SimpleScreenTab
 
 A tiny, free macOS app switcher that makes **Cmd-Tab show only the apps on the display your mouse is on**. On a multi-monitor Mac the built-in Cmd-Tab always lists every window from every screen; SimpleScreenTab replaces it with a switcher scoped to the current monitor, so you flip between the windows that are actually in front of you.
 
 Written in a single Swift file, about 300 lines, no dependencies, no telemetry, no account, no paid tiers. It is a lightweight alternative to AltTab and Witch for the one thing most multi-display users want: a per-monitor Cmd-Tab.
+
+![SimpleScreenTab: Cmd-Tab switcher showing only the apps on the current monitor](docs/screenshot.png)
 
 ## Install / Update
 
