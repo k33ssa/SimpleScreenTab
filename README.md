@@ -2,11 +2,21 @@
 
 # SimpleScreenTab
 
+**[Русская версия ниже](#русский)**
+
 A tiny, free macOS app switcher that makes **Cmd-Tab show only the apps on the display your mouse is on**. On a multi-monitor Mac the built-in Cmd-Tab always lists every window from every screen; SimpleScreenTab replaces it with a switcher scoped to the current monitor, so you flip between the windows that are actually in front of you.
 
 Written in a single Swift file, about 300 lines, no dependencies, no telemetry, no account, no paid tiers. It is a lightweight alternative to AltTab and Witch for the one thing most multi-display users want: a per-monitor Cmd-Tab.
 
 ![SimpleScreenTab: Cmd-Tab switcher showing only the apps on the current monitor](docs/screenshot.png)
+
+## Download
+
+| Platform | File | Install |
+|---|---|---|
+| macOS 13+ (Apple Silicon + Intel) | [SimpleScreenTab-1.1.0.zip](https://github.com/k33ssa/SimpleScreenTab/releases/download/v1.1.0/SimpleScreenTab-1.1.0.zip) | `brew install --cask k33ssa/tap/simplescreentab` |
+
+macOS only. All versions: [Releases](https://github.com/k33ssa/SimpleScreenTab/releases).
 
 ## Install / Update
 
@@ -32,7 +42,7 @@ To uninstall: `brew uninstall --cask simplescreentab`, or for a source build:
 curl -fsSL https://raw.githubusercontent.com/k33ssa/SimpleScreenTab/master/install.sh | bash -s -- uninstall
 ```
 
-Automatic background updates for Homebrew installs:
+**Auto-update.** `brew upgrade` picks up new versions; to let Homebrew update everything by itself in the background (once a day), run once:
 
 ```bash
 brew tap homebrew/autoupdate && brew autoupdate start --upgrade --cleanup
@@ -87,3 +97,41 @@ MIT. Do what you like. This is original code, not derived from any other switche
 ## Keywords
 
 macOS Cmd-Tab per monitor, app switcher current display only, per-screen window switcher Mac, limit Cmd-Tab to one monitor, free AltTab alternative, multi-monitor app switcher macOS, show only current screen apps Cmd-Tab, Swift macOS window switcher.
+
+---
+
+<a id="русский"></a>
+
+## Русский
+
+**SimpleScreenTab** — бесплатный переключатель приложений для macOS: по **⌘Tab** показывает только приложения с того монитора, где сейчас курсор. Стандартный ⌘Tab на нескольких мониторах всегда показывает все окна со всех экранов, а настройки, чтобы это ограничить, в macOS нет. Платные программы это умеют, но для одной этой функции хватает маленького приложения: один файл на Swift, около 300 строк, без зависимостей, телеметрии и аккаунтов. Лёгкая альтернатива AltTab и Witch.
+
+### Скачать
+
+| Система | Файл | Установка |
+|---|---|---|
+| macOS 13+ (Apple Silicon и Intel) | [SimpleScreenTab-1.1.0.zip](https://github.com/k33ssa/SimpleScreenTab/releases/download/v1.1.0/SimpleScreenTab-1.1.0.zip) | `brew install --cask k33ssa/tap/simplescreentab` |
+
+Только macOS: приложение построено на маковских API окон и Универсального доступа, версии для Windows нет.
+
+### Установка и обновление
+
+```bash
+brew install --cask k33ssa/tap/simplescreentab
+```
+
+- Обновление: `brew upgrade --cask simplescreentab`
+- **Автообновление** в фоне (раз в сутки), выполнить один раз: `brew tap homebrew/autoupdate && brew autoupdate start --upgrade --cleanup`
+- Удаление: `brew uninstall --cask simplescreentab`
+
+Без Homebrew: скачать zip, перенести SimpleScreenTab.app в «Программы» и открыть. Приложение бесплатное и не заверено Apple; если macOS не даёт его открыть, один раз выполнить `xattr -dr com.apple.quarantine /Applications/SimpleScreenTab.app`.
+
+При первом запуске macOS попросит разрешение «Универсальный доступ» — включить. Дальше приложение само запускается при входе.
+
+### Как пользоваться
+
+- **⌘Tab** — список приложений только с монитора под курсором.
+- Держа ⌘, Tab / ⇧Tab (или ← / →) двигают выбор; отпустить ⌘ — переключиться.
+- Поднимается именно то окно, что на этом мониторе, а не случайное окно приложения.
+- `Esc` — отмена, `⌘Q` в списке — закрыть выбранное приложение.
+- Полноэкранные окна в список не попадают.

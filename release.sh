@@ -43,16 +43,17 @@ SHA=$(shasum -a 256 "$ZIP" | awk '{print $1}')
 gh release create "v$VER" "$ZIP" -R k33ssa/$NAME --title "$NAME $VER" --notes-file - <<EOF
 Per-monitor Cmd-Tab for macOS: the switcher lists only the apps on the display under your mouse.
 
-**Install with Homebrew**
-\`\`\`
-brew install --cask k33ssa/tap/simplescreentab
-\`\`\`
-**Or download** \`$NAME-$VER.zip\`, unzip, move \`$NAME.app\` to Applications, then run once:
-\`\`\`
-xattr -dr com.apple.quarantine /Applications/$NAME.app && open /Applications/$NAME.app
-\`\`\`
-(The app is free and not notarized by Apple, so macOS quarantines the download.)
-Grant Accessibility when asked. Universal binary (Apple Silicon + Intel), macOS 13+.
+## Downloads
+
+| Platform | File | Install |
+|---|---|---|
+| macOS 13+ (Apple Silicon + Intel) | [$NAME-$VER.zip](https://github.com/k33ssa/$NAME/releases/download/v$VER/$NAME-$VER.zip) | \`brew install --cask k33ssa/tap/simplescreentab\` |
+
+macOS only: the app is built on macOS window and Accessibility APIs, there is no Windows or Linux version.
+
+**Update:** \`brew upgrade --cask simplescreentab\`. Automatic background updates: \`brew tap homebrew/autoupdate && brew autoupdate start --upgrade --cleanup\`.
+
+**Zip without Homebrew:** unzip, move $NAME.app to Applications, open it. The app is free and not notarized; if macOS refuses to open it, run \`xattr -dr com.apple.quarantine /Applications/$NAME.app\` once. Grant Accessibility when asked.
 EOF
 
 # bump cask in the tap
