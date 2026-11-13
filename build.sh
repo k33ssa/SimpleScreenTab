@@ -39,8 +39,8 @@ cat > "$APP/Contents/Info.plist" <<PLISTEOF
 </dict></plist>
 PLISTEOF
 
-echo "Signing (ad-hoc)..."
-codesign --force --deep --sign - "$APP"
+echo "Signing..."
+ID=$(security find-identity -p codesigning 2>/dev/null | awk "/ScreenTab Local Signing/{print \$2; exit}"); codesign --force --deep --sign "${ID:--}" "$APP"
 
 echo "Installing login item..."
 cat > "$PLIST" <<PLISTEOF

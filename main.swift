@@ -283,9 +283,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let opts = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
         _ = AXIsProcessTrustedWithOptions(opts)
         if !Switcher.shared.startTap() {
-            status.button?.title = "⇥!"
+            status.button?.title = " !"
+            status.button?.imagePosition = .imageLeft
             retry = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] t in
-                if Switcher.shared.startTap() { t.invalidate(); self?.status.button?.title = "⇥" }
+                if Switcher.shared.startTap() { t.invalidate(); self?.status.button?.title = "" }
             }
         }
     }
