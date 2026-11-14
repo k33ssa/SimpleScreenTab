@@ -56,6 +56,10 @@ macOS only: the app is built on macOS window and Accessibility APIs, there is no
 **Zip without Homebrew:** unzip, move $NAME.app to Applications, open it. The app is free and not notarized; if macOS refuses to open it, run \`xattr -dr com.apple.quarantine /Applications/$NAME.app\` once. Grant Accessibility when asked.
 EOF
 
+# README: download links -> this version
+sed -i '' -E "s/($NAME-)[0-9]+\.[0-9]+\.[0-9]+(\.zip)/\1$VER\2/g; s#(releases/download/v)[0-9]+\.[0-9]+\.[0-9]+#\1$VER#g" README.md
+git add README.md && git commit -qm "README: links to $VER" && git push -q origin master || true
+
 # bump cask in the tap
 TAP=$(mktemp -d)
 gh repo clone k33ssa/homebrew-tap "$TAP" -- -q

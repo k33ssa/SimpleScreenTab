@@ -14,7 +14,7 @@ Written in a single Swift file, about 300 lines, no dependencies, no telemetry, 
 
 | Platform | File | Install |
 |---|---|---|
-| macOS 13+ (Apple Silicon + Intel) | [SimpleScreenTab-1.1.0.zip](https://github.com/k33ssa/SimpleScreenTab/releases/download/v1.1.0/SimpleScreenTab-1.1.0.zip) | `brew install --cask k33ssa/tap/simplescreentab` |
+| macOS 13+ (Apple Silicon + Intel) | [SimpleScreenTab-1.2.0.zip](https://github.com/k33ssa/SimpleScreenTab/releases/download/v1.2.0/SimpleScreenTab-1.2.0.zip) | `brew install --cask k33ssa/tap/simplescreentab` |
 
 macOS only. All versions: [Releases](https://github.com/k33ssa/SimpleScreenTab/releases).
 
@@ -110,7 +110,7 @@ macOS Cmd-Tab per monitor, app switcher current display only, per-screen window 
 
 | Система | Файл | Установка |
 |---|---|---|
-| macOS 13+ (Apple Silicon и Intel) | [SimpleScreenTab-1.1.0.zip](https://github.com/k33ssa/SimpleScreenTab/releases/download/v1.1.0/SimpleScreenTab-1.1.0.zip) | `brew install --cask k33ssa/tap/simplescreentab` |
+| macOS 13+ (Apple Silicon и Intel) | [SimpleScreenTab-1.2.0.zip](https://github.com/k33ssa/SimpleScreenTab/releases/download/v1.2.0/SimpleScreenTab-1.2.0.zip) | `brew install --cask k33ssa/tap/simplescreentab` |
 
 Только macOS: приложение построено на маковских API окон и Универсального доступа, версии для Windows нет.
 
