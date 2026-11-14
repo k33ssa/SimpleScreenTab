@@ -52,6 +52,7 @@ brew tap homebrew/autoupdate && brew autoupdate start --upgrade --cleanup
 
 - **Cmd-Tab switches apps on the current screen only** — the display under the mouse pointer.
 - Hold Cmd, press Tab / Shift-Tab (or Left / Right) to move the selection; release Cmd to switch.
+- Point at an icon to select it, click to switch right away. Moving the mouse outside the icons keeps the selection.
 - Raises the specific window that lives on that monitor, not a random window of the app.
 - `Esc` cancels. `Cmd-Q` while the switcher is open quits the highlighted app.
 - Rounded, blurred HUD panel centered on the active monitor.
@@ -132,6 +133,7 @@ brew install --cask k33ssa/tap/simplescreentab
 
 - **⌘Tab** — список приложений только с монитора под курсором.
 - Держа ⌘, Tab / ⇧Tab (или ← / →) двигают выбор; отпустить ⌘ — переключиться.
+- Навести курсор на иконку — выбрать её, кликнуть — сразу переключиться. Вне иконок выбор не меняется.
 - Поднимается именно то окно, что на этом мониторе, а не случайное окно приложения.
 - `Esc` — отмена, `⌘Q` в списке — закрыть выбранное приложение.
 - Полноэкранные окна в список не попадают.

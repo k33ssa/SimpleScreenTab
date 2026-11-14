@@ -18,6 +18,7 @@ final class Switcher {
     var entries: [Entry] = []
     var index = 0
     var showing = false
+    var mouseAtShow = NSPoint.zero   // где был курсор при открытии: стоящая мышь ничего не выбирает
 
     let cellW: CGFloat = 112, cellH: CGFloat = 118, pad: CGFloat = 16
 
@@ -129,8 +130,9 @@ final class Switcher {
         panel.isOpaque = false
         panel.backgroundColor = .clear
         panel.hasShadow = true
+        panel.acceptsMouseMovedEvents = true
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .transient]
-        let fx = NSVisualEffectView()
+        let fx = HoverView()
         fx.material = .hudWindow
         fx.state = .active
         fx.blendingMode = .behindWindow
@@ -148,6 +150,7 @@ final class Switcher {
         let start = (entries[0].app == front && entries.count > 1) ? 1 : 0
         index = reverse ? entries.count - 1 : start
         layout(on: screen)
+        mouseAtShow = NSEvent.mouseLocation
         showing = true
         highlight()
         panel.orderFrontRegardless()
@@ -207,7 +210,25 @@ final class Switcher {
         panel.orderOut(nil)
     }
 
+    // Мышь: выбор только над иконкой; поля панели и всё вокруг выбор не меняют.
+    func cellIndex(at p: NSPoint) -> Int? { cells.firstIndex { $0.frame.contains(p) } }
+
+    func hover(_ p: NSPoint) {
+        guard showing, NSEvent.mouseLocation != mouseAtShow,
+              let i = cellIndex(at: p), i != index else { return }
+        index = i
+        highlight()
+        if ProcessInfo.processInfo.environment["SST_TIMING"] != nil { NSLog("SST hover -> %d", i) }
+    }
+
+    func click(_ p: NSPoint) {
+        guard showing, let i = cellIndex(at: p) else { return }
+        index = i
+        commit()
+    }
+
     func commit() {
+        guard showing else { return }   // уже переключились кликом — отпускание ⌘ ничего не делает
         hide()
         guard index < entries.count else { return }
         let e = entries[index]
@@ -319,6 +340,22 @@ let tapCallback: CGEventTapCallBack = { _, type, event, _ in
     default: break
     }
     return Unmanaged.passUnretained(event)
+}
+
+// Подложка панели: ловит движение мыши и клики.
+final class HoverView: NSVisualEffectView {
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        trackingAreas.forEach(removeTrackingArea)
+        addTrackingArea(NSTrackingArea(rect: .zero, options: [.mouseMoved, .mouseEnteredAndExited, .activeAlways, .inVisibleRect],
+                                       owner: self, userInfo: nil))
+    }
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+    // клики по иконке и подписи достаются панели, а не вложенным полям
+    override func hitTest(_ p: NSPoint) -> NSView? { frame.contains(p) ? self : nil }
+    override func mouseMoved(with e: NSEvent) { Switcher.shared.hover(convert(e.locationInWindow, from: nil)) }
+    override func mouseEntered(with e: NSEvent) { Switcher.shared.hover(convert(e.locationInWindow, from: nil)) }
+    override func mouseDown(with e: NSEvent) { Switcher.shared.click(convert(e.locationInWindow, from: nil)) }
 }
 
 // MARK: приложение
