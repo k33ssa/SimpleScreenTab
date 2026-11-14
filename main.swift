@@ -85,6 +85,43 @@ final class Switcher {
 
     // MARK: панель
 
+    // Иконки рисуются один раз в маленький битмап: достать и отрисовать иконку — сотни мс.
+    var iconCache: [String: NSImage] = [:]
+
+    func iconKey(_ app: NSRunningApplication) -> String {
+        app.bundleURL?.path ?? "pid:\(app.processIdentifier)"
+    }
+
+    func icon(for app: NSRunningApplication) -> NSImage? {
+        let k = iconKey(app)
+        if let c = iconCache[k] { return c }
+        guard let src = app.icon else { return nil }
+        let side: CGFloat = 76, scale = NSScreen.screens.map(\.backingScaleFactor).max() ?? 2
+        let px = Int(side * scale)
+        guard let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: px, pixelsHigh: px,
+                                         bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
+                                         colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0) else { return src }
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
+        src.draw(in: NSRect(x: 0, y: 0, width: px, height: px))
+        NSGraphicsContext.restoreGraphicsState()
+        let img = NSImage(size: NSSize(width: side, height: side))
+        img.addRepresentation(rep)
+        iconCache[k] = img
+        return img
+    }
+
+    // Прогреть кэш заранее: при старте и когда запускается новая программа.
+    func warmIcons() {
+        for a in NSWorkspace.shared.runningApplications where a.activationPolicy == .regular { _ = icon(for: a) }
+        NotificationCenter.default.addObserver(forName: NSWorkspace.didLaunchApplicationNotification,
+                                               object: nil, queue: .main, using: { [weak self] n in
+            guard let a = n.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication,
+                  a.activationPolicy == .regular else { return }
+            _ = self?.icon(for: a)
+        })
+    }
+
     func makePanel() {
         panel = NSPanel(contentRect: .zero, styleMask: [.borderless, .nonactivatingPanel],
                         backing: .buffered, defer: false)
@@ -102,8 +139,10 @@ final class Switcher {
     }
 
     func show(reverse: Bool) {
+        let t0 = CFAbsoluteTimeGetCurrent()
         let screen = screenUnderMouse()
         entries = collect(on: screen)
+        let t1 = CFAbsoluteTimeGetCurrent()
         guard !entries.isEmpty else { return }
         let front = NSWorkspace.shared.frontmostApplication
         let start = (entries[0].app == front && entries.count > 1) ? 1 : 0
@@ -112,6 +151,10 @@ final class Switcher {
         showing = true
         highlight()
         panel.orderFrontRegardless()
+        let t2 = CFAbsoluteTimeGetCurrent()
+        if ProcessInfo.processInfo.environment["SST_TIMING"] != nil {
+            NSLog("SST timing: windows %.0f ms, panel %.0f ms", (t1 - t0) * 1000, (t2 - t1) * 1000)
+        }
     }
 
     func layout(on screen: NSScreen) {
@@ -130,7 +173,7 @@ final class Switcher {
             cell.wantsLayer = true
             cell.layer?.cornerRadius = 12
             let img = NSImageView(frame: NSRect(x: (cellW - 76) / 2, y: 32, width: 76, height: 76))
-            img.image = e.app.icon
+            img.image = icon(for: e.app)
             img.imageScaling = .scaleProportionallyUpOrDown
             let label = NSTextField(labelWithString: e.app.localizedName ?? "?")
             label.frame = NSRect(x: 4, y: 8, width: cellW - 8, height: 18)
@@ -168,18 +211,33 @@ final class Switcher {
         hide()
         guard index < entries.count else { return }
         let e = entries[index]
-        raise(e)
-        e.app.activate(options: [.activateIgnoringOtherApps])
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { self.raise(e) }
+        // запросы к Accessibility — не в главном потоке: подвисшее приложение не должно стопорить UI
+        DispatchQueue.global(qos: .userInteractive).async {
+            self.raise(e)
+            DispatchQueue.main.async { e.app.activate(options: [.activateIgnoringOtherApps]) }
+            usleep(50_000)
+            self.raise(e)
+        }
+    }
+
+    func quitSelected() {
+        guard index < entries.count else { return }
+        entries[index].app.terminate()
+        entries.remove(at: index)
+        if entries.isEmpty { hide(); return }
+        index = min(index, entries.count - 1)
+        layout(on: screenUnderMouse()); highlight()
     }
 
     // Поднять именно то окно приложения, что лежит на этом мониторе.
     func raise(_ e: Entry) {
         let ax = AXUIElementCreateApplication(e.app.processIdentifier)
+        AXUIElementSetMessagingTimeout(ax, 0.25)   // по умолчанию ~6 с
         var v: CFTypeRef?
         guard AXUIElementCopyAttributeValue(ax, kAXWindowsAttribute as CFString, &v) == .success,
               let wins = v as? [AXUIElement] else { return }
         for w in wins {
+            AXUIElementSetMessagingTimeout(w, 0.25)
             var pv: CFTypeRef?, sv: CFTypeRef?
             var p = CGPoint.zero, s = CGSize.zero
             if AXUIElementCopyAttributeValue(w, kAXPositionAttribute as CFString, &pv) == .success, let pv {
@@ -206,14 +264,26 @@ final class Switcher {
                                         options: .defaultTap, eventsOfInterest: CGEventMask(mask),
                                         callback: tapCallback, userInfo: nil) else { return false }
         tap = t
-        let src = CFMachPortCreateRunLoopSource(nil, t, 0)
-        CFRunLoopAddSource(CFRunLoopGetMain(), src, .commonModes)
-        CGEvent.tapEnable(tap: t, enable: true)
+        // свой поток: перехват отвечает системе сразу, даже если главный поток занят панелью
+        let th = Thread {
+            let src = CFMachPortCreateRunLoopSource(nil, t, 0)
+            CFRunLoopAddSource(CFRunLoopGetCurrent(), src, .commonModes)
+            CGEvent.tapEnable(tap: t, enable: true)
+            CFRunLoopRun()
+        }
+        th.name = "event-tap"
+        th.qualityOfService = .userInteractive
+        th.start()
         return true
     }
 }
 
 let kTab: Int64 = 48, kEsc: Int64 = 53, kReturn: Int64 = 36, kLeft: Int64 = 123, kRight: Int64 = 124, kQ: Int64 = 12
+
+// Состояние для потока перехвата (меняется только в нём).
+var tapShowing = false
+
+func onMain(_ f: @escaping () -> Void) { DispatchQueue.main.async(execute: f) }
 
 let tapCallback: CGEventTapCallBack = { _, type, event, _ in
     let s = Switcher.shared
@@ -227,32 +297,25 @@ let tapCallback: CGEventTapCallBack = { _, type, event, _ in
     case .keyDown:
         if code == kTab, flags.contains(.maskCommand), !flags.contains(.maskControl), !flags.contains(.maskAlternate) {
             let back = flags.contains(.maskShift)
-            if s.showing { s.step(back ? -1 : 1) } else { s.show(reverse: back) }
+            if tapShowing { onMain { s.step(back ? -1 : 1) } }
+            else { tapShowing = true; onMain { s.show(reverse: back) } }
             return nil
         }
-        if s.showing {
+        if tapShowing {
             switch code {
-            case kEsc: s.hide()
-            case kReturn: s.commit()
-            case kLeft: s.step(-1)
-            case kRight: s.step(1)
-            case kQ:   // ⌘Q в списке — закрыть выбранное приложение, как в системном
-                if s.index < s.entries.count {
-                    s.entries[s.index].app.terminate()
-                    s.entries.remove(at: s.index)
-                    if s.entries.isEmpty { s.hide() } else {
-                        s.index = min(s.index, s.entries.count - 1)
-                        s.layout(on: s.screenUnderMouse()); s.highlight()
-                    }
-                }
+            case kEsc: tapShowing = false; onMain { s.hide() }
+            case kReturn: tapShowing = false; onMain { s.commit() }
+            case kLeft: onMain { s.step(-1) }
+            case kRight: onMain { s.step(1) }
+            case kQ: onMain { s.quitSelected() }   // ⌘Q в списке — закрыть выбранное приложение
             default: break
             }
             return nil
         }
     case .keyUp:
-        if s.showing { return nil }
+        if tapShowing { return nil }
     case .flagsChanged:
-        if s.showing, !flags.contains(.maskCommand) { s.commit() }
+        if tapShowing, !flags.contains(.maskCommand) { tapShowing = false; onMain { s.commit() } }
     default: break
     }
     return Unmanaged.passUnretained(event)
@@ -276,6 +339,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             try? SMAppService.mainApp.register()
         }
         Switcher.shared.makePanel()
+        DispatchQueue.main.async { Switcher.shared.warmIcons() }
         #if PREVIEW
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { Switcher.shared.show(reverse: false) }
         return
